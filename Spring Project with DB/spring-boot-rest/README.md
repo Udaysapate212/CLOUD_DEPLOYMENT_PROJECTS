@@ -89,5 +89,105 @@ This will create a `.jar` file in the `target` directory.
 
 Once the environment is successfully launched, you will get a URL to access your application. You can find this URL in the environment's dashboard.
 
----
-This `README.md` provides a comprehensive guide for deploying the application to AWS, as requested.
+## Deployment to AWS ECS with Amazon ECR
+
+This section explains how to deploy the application to Amazon Elastic Container Service (ECS) by pushing a Docker image to Amazon Elastic Container Registry (ECR).
+
+### Prerequisites
+
+*   Docker installed.
+*   AWS CLI installed and configured.
+
+### 1. Create an ECR Repository
+
+1.  Navigate to the **ECR service** in the AWS Management Console.
+2.  Click on **"Create repository"**.
+3.  Give your repository a unique name (e.g., `spring-boot-rest-app`).
+4.  Click **"Create repository"**.
+
+### 2. Create a Dockerfile
+
+Create a `Dockerfile` in the root of your `spring-boot-rest` project with the following content:
+
+```Dockerfile
+FROM openjdk:17-jdk-slim
+ARG JAR_FILE=target/*.jar
+COPY ${JAR_FILE} application.jar
+ENTRYPOINT ["java","-jar","/application.jar"]
+```
+
+### 3. Build and Push the Docker Image to ECR
+
+1.  **Authenticate Docker to your ECR registry:**
+    Run the following command, replacing `<aws_account_id>` and `<region>` with your details.
+
+    ```bash
+    aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
+    ```
+
+2.  **Build the Docker image:**
+    Navigate to the `spring-boot-rest` directory and run:
+
+    ```bash
+    docker build -t spring-boot-rest-app .
+    ```
+
+3.  **Tag the Docker image:**
+    Tag your image so you can push it to your repository.
+
+    ```bash
+    docker tag spring-boot-rest-app:latest <aws_account_id>.dkr.ecr.<region>.amazonaws.com/spring-boot-rest-app:latest
+    ```
+
+4.  **Push the Docker image to ECR:**
+    ```bash
+    docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/spring-boot-rest-app:latest
+    ```
+
+### 4. Create an ECS Task Definition
+
+1.  Go to the **ECS service** in the AWS console.
+2.  Click on **"Task Definitions"** in the left menu and then **"Create new Task Definition"**.
+3.  **Configure task definition:**
+    *   **Task definition family:** `spring-boot-rest-task`
+    *   **Launch type:** `AWS Fargate`
+    *   **Operating system:** `Linux/X86_64`
+    *   **Task size:** Choose appropriate CPU and memory (e.g., 1 vCPU, 2GB memory).
+4.  **Define the container:**
+    *   **Name:** `spring-boot-rest-container`
+    *   **Image URI:** Paste the URI of the image you pushed to ECR.
+    *   **Port mappings:** Add a port mapping for port `8080` (or whatever port your application runs on).
+    *   **Environment variables:** Add the datasource URL, username, and password as environment variables. **It is highly recommended to use AWS Secrets Manager for sensitive data.**
+        *   `SPRING_DATASOURCE_URL`: `jdbc:postgresql://<your-rds-endpoint>:5432/<your-database-name>`
+        *   `SPRING_DATASOURCE_USERNAME`: `<your-master-username>`
+        *   `SPRING_DATASOURCE_PASSWORD`: `<your-master-password>`
+        *   `SERVER_PORT`: `8080`
+5.  Click **"Create"**.
+
+### 5. Create an ECS Cluster
+
+1.  In the ECS console, click on **"Clusters"** and then **"Create Cluster"**.
+2.  **Configure cluster:**
+    *   **Cluster name:** `my-cluster`
+    *   **Networking:** Choose your VPC and subnets.
+    *   **Infrastructure:** Select **"AWS Fargate"**.
+3.  Click **"Create"**.
+
+### 6. Create an ECS Service
+
+1.  Go to your newly created cluster and click the **"Services"** tab, then **"Create"**.
+2.  **Configure service:**
+    *   **Launch type:** `Fargate`
+    *   **Task Definition:** Select the task definition you created.
+    *   **Service name:** `spring-boot-rest-service`
+    *   **Desired tasks:** `1`
+3.  **Networking:**
+    *   Choose your VPC, subnets, and security groups.
+    *   Enable **"Public IP"** if you want to access your service from the internet.
+4.  **Load balancing (optional but recommended for production):**
+    *   You can create an Application Load Balancer to distribute traffic to your tasks.
+5.  Click **"Create Service"**.
+
+### 7. Access Your Application
+
+Once the service is running and the task has started, you can find the public IP of the task in the task details and access your application at `http://<public-ip>:8080`.
