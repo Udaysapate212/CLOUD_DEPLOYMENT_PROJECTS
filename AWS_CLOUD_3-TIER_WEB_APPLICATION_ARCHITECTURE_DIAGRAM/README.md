@@ -42,7 +42,7 @@ The following AWS services are used to build this three-tier architecture:
 
 Here is the visual representation of the three-tier architecture:
 
-![alt text](AWS_CLOUD_3-TIER_WEB_APPLICATION_ARCHITECTURE_DIAGRAM-1.png)
+![Architecture Diagram](./AWS_CLOUD_3-TIER_WEB_APPLICATION_ARCHITECTURE_DIAGRAM.png)
 
 ## Security Enhancements
 
