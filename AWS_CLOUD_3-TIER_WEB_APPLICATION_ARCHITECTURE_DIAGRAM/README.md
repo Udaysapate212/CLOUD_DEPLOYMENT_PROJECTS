@@ -8,7 +8,7 @@ A three-tier architecture divides an application into three logical and physical
 
 1.  **Presentation Tier (CloudFront / S3):** This is the user interface and the part of the application that the end-users interact with. It's responsible for displaying data to the user and collecting user input. In our AWS architecture, this tier is handled by Amazon S3 for hosting static web content and Amazon CloudFront as a Content Delivery Network (CDN) to cache content closer to users, reducing latency.
 
-2.  **Business / Logic Tier (EC2 / ECS):** This tier is the core of the application. It contains the business logic, processes user input from the presentation tier, and interacts with the data tier. We use Amazon EC2 instances or Amazon Elastic Container Service (ECS) to run the application code. This tier is placed in private subnets to protect it from direct internet access.
+2.  **Business / Logic Tier (EC2 / ECS):** This tier is the core of the application. It contains the business logic and processes user input from the presentation tier. In this architecture, the Amazon EC2 instances that run the application code are placed in the **public subnet**, allowing them to be directly accessed by the load balancer.
 
 3.  **Database Tier (RDS):** This tier is responsible for storing and managing the application's data. It consists of a database system. In our architecture, we use Amazon Relational Database Service (RDS), which is a managed database service that makes it easy to set up, operate, and scale a relational database in the cloud. For high availability and fault tolerance, we use RDS replicas. This tier is also placed in private subnets to ensure it's not exposed to the internet.
 
@@ -42,7 +42,7 @@ The following AWS services are used to build this three-tier architecture:
 
 Here is the visual representation of the three-tier architecture:
 
-![alt text](AWS_CLOUD_3-TIER_WEB_APPLICATION_ARCHITECTURE_DIAGRAM.png)
+![alt text](AWS_CLOUD_3-TIER_WEB_APPLICATION_ARCHITECTURE_DIAGRAM-1.png)
 
 ## Security Enhancements
 
